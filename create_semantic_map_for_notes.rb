@@ -11,10 +11,22 @@ end
 db = SQLite3::Database.open( "notes.db" )
 notes = db.execute("select * from notes;")
 
-notes = notes.collect {|n| [n.last.split("/").last.to_i, n[2].downcase.gsub(/<\/?[^>]*>/, "").gsub(/[^a-zA-Z0-9\-\s]/, "")]}
+# Get the post IDs (last part of permalink) and raw text,
+# downcased and stripped of HTML tags and symbols.
+notes = notes.collect {|n| 
+  [
+    n.last.split("/").last.to_i, 
+    n[2]
+      .downcase
+      .gsub(/<\/?[^>]*>/, "")
+      .gsub(/[^a-zA-Z0-9\-\s]/, "")
+  ]
+}
 
-index = {}
-reverse_index = {}
+index = {} # Maps from each post ID to a list of words in that post.
+reverse_index = {} # Maps from each word to a list of posts containing it.
+
+# Rip through the notes and build those indexes.
 notes.each do |doc|
   id = doc[0]
   words = doc[1].split(/\s+/)
@@ -31,12 +43,14 @@ notes.each do |doc|
 end
 
 def tf(term, doc, index)
+  "Normalized term frequency within a document"
   num = index[doc].count(term)
   denom = index[doc].length.to_f
   num / denom
 end
 
 def idf(term, index, reverse_index)
+  "Inverse document frequency of a term"
   num = index.keys.length
   denom = reverse_index[term].length.to_f
   Math::log(num / (denom + 1))
@@ -46,7 +60,7 @@ def tf_idf(term, doc, index, reverse_index)
   tf(term, doc, index) * idf(term, index, reverse_index)
 end
 
-semantics = {}
+semantics = {} # Maps words to a set [tf-idf weight of word in doc, docID] pairs.
 index.each do |doc, words|
   p doc
   words.uniq.collect {|w| [tf_idf(w, doc, index, reverse_index), w]}.each do |pair|
@@ -60,4 +74,4 @@ index.each do |doc, words|
   end
 end
 
-ObjectStash.store semantics, './semantics2.stash'
+ObjectStash.store semantics, './semantics.stash'

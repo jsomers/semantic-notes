@@ -5,6 +5,7 @@ require 'date'
 require 'json'
 require 'pp'
 
+# From http://stackoverflow.com/questions/279769/convert-to-from-datetime-and-time-in-ruby.
 class Date
   def to_gm_time
     to_time(new_offset, :gm)
