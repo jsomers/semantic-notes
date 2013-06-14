@@ -34,11 +34,7 @@ notes.each do |doc|
   index[id] = words
   
   words.each do |term|
-    if reverse_index[term]
-      reverse_index[term] << id
-    else
-      reverse_index[term] = [id]
-    end
+    (reverse_index[term] ||= []) << id
   end
 end
 
@@ -66,11 +62,7 @@ index.each do |doc, words|
   words.uniq.collect {|w| [tf_idf(w, doc, index, reverse_index), w]}.each do |pair|
     word = pair[1]
     weight = pair[0]
-    if semantics[word]
-      semantics[word] << [weight, doc]
-    else
-      semantics[word] = [[weight, doc]]
-    end
+    (semantics[word] ||= []) << [weight, doc]
   end
 end
 
